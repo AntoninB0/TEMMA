@@ -35,10 +35,6 @@ def read_pattern(path, show=False):
 x, d = read_pattern("student-materials/patterns/zero.txt", show=True)
 print("classe :", d)    
 
-random.seed(SEED)
-w = [random.uniform(-0.1, 0.1) for _ in range(N)]
-b = BIAS
-
 #Q1.b
 def initialiser_poids(graine=SEED):
     # Fixer la graine pour la reproductibilité
