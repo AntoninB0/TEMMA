@@ -91,3 +91,29 @@ print("Biais final :", bias)
 
 for x, d in examples:
     print(f"d={d}  ŷ={decision(x, weights, bias)}  a={score(x, weights, bias):+.4f}")
+
+
+#question 2
+
+def learning_stage(x, d, w, b, eta):
+    # calcul du score
+    a = b
+    for j in range(len(x)):
+        a += w[j] * x[j]
+    
+    # predicition y
+    y_hat = 1 if a >= 0 else 0
+    
+    # calcul de l'erreur
+    e = d - y_hat
+    
+    # correction du biais b
+    g_b = -e
+    b = b - eta * g_b
+    
+    # correction des poids w
+    for j in range(len(w)):
+        g_j = -e * x[j]
+        w[j] = w[j] - eta * g_j
+        
+    return w, b, a, y_hat, e
