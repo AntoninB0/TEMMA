@@ -2,6 +2,7 @@
 
 import random
 from pathlib import Path 
+import json
 
 N = 48              # 8 lignes x 6 colonnes
 SEED = 42         # graine pour l'aléatoire
@@ -117,3 +118,54 @@ def learning_stage(x, d, w, b, eta):
         w[j] = w[j] - eta * g_j
         
     return w, b, a, y_hat, e
+
+# Question 3
+
+# compter les erreurs, sans rien modifier
+def count_errors(examples, w, b):
+    errors = 0
+    for x, d in examples:
+        if decision(x, w, b) != d:
+            errors += 1
+    return errors
+
+
+# entraînement par époques
+def train(examples, w_init, b_init, eta=ETA, max_epochs=1000, seed=SEED):
+    rng = random.Random(seed)          # générateur dédié au mélange
+    w, b = list(w_init), b_init        # copie : on garde l'initial intact
+
+    history = [count_errors(examples, w, b)]   # historique[0] = avant apprentissage
+    epoch = 0
+
+    while history[-1] != 0 and epoch < max_epochs:
+        epoch += 1
+
+        order = examples[:]            # copie de la liste
+        rng.shuffle(order)             # on mélange la copie
+
+        for x, d in order:             # une présentation par motif
+            w, b, e = update(x, w, b, d, eta)
+
+        history.append(count_errors(examples, w, b))   # mesure à poids figés
+
+    converged = (history[-1] == 0)
+    if not converged:
+        print(f"ATTENTION : limite de {max_epochs} époques atteinte, "
+              f"{history[-1]} erreur(s) restante(s)")
+    return w, b, history, epoch, converged
+
+
+# Utilisation
+w_init = init_params()                 # mêmes poids qu'avant grâce à la graine 42
+b_init = BIAS
+print("erreurs avant apprentissage :", count_errors(examples, w_init, b_init))
+
+w_learned, b_learned, history, n_epochs, ok = train(examples, w_init, b_init)
+print("époques :", n_epochs, "| convergé :", ok)
+print("erreurs par époque :", history)
+
+# Sauvegarde
+with open("learned_step1.json", "w") as f:
+    json.dump({"seed": SEED, "eta": ETA, "epochs": n_epochs, "converged": ok,
+               "bias": b_learned, "weights": w_learned, "history": history}, f)
