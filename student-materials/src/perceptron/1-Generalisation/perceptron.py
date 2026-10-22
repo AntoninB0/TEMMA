@@ -169,3 +169,87 @@ print("erreurs par époque :", history)
 with open("learned_step1.json", "w") as f:
     json.dump({"seed": SEED, "eta": ETA, "epochs": n_epochs, "converged": ok,
                "bias": b_learned, "weights": w_learned, "history": history}, f)
+
+
+
+# Question 4 : teste la robustesse au bruit
+def add_noise(x, n_pixels, rng):
+    """
+    Ajoute du bruit en creant une copie du motif x et inverse exactement n_pixels tirés au hasard.
+    
+    - x : liste des 48 pixels d'origine (0 ou 1)
+    - n_pixels : nombre exact de pixels à inverser
+    - rng : instance de random.Random pour garantir la reproductibilité
+    """
+    # 1. Copie du motif original pour ne pas le modifier directement
+    x_noisy = list(x)
+    
+    # 2. Tirage sans remise de n_pixels indices distincts parmi les 48 disponibles (0 à 47)
+    # rng.sample garantit qu'un même pixel ne sera pas tiré deux fois dans le même essai
+    indices_to_flip = rng.sample(range(len(x)), n_pixels)
+    
+    # 3. Inversion binaire des pixels sélectionnés :
+    # Si x_noisy[idx] vaut 0 -> 1 - 0 = 1
+    # Si x_noisy[idx] vaut 1 -> 1 - 1 = 0
+    for idx in indices_to_flip:
+        x_noisy[idx] = 1 - x_noisy[idx]
+        
+    return x_noisy
+
+
+def test_robustness(examples, w, b, n_tests=50, seed=2026):
+    """
+    Evalue la résistance du modèle face à différents taux de bruit (0 a 100%).
+    
+    - examples : liste des motifs propres [(x0, d0), (x1, d1)]
+    - w, b : poids et biais APPRIS à la question 3 (ne changent plus ici)
+    - n_tests : nombre de copies bruitées par chiffre et par taux (50 selon le sujet)
+    - seed : graine fixée pour réutiliser exactement les mêmes copies à l'étape 2
+    """
+    # Fixer la graine pour le générateur du bruit (ex. 2026)
+    rng = random.Random(seed)
+    
+    # Dictionnaire pour stocker les taux d'erreur par niveau de bruit
+    results = {}
+
+    # Parcourir les taux de bruit p = 0%, 10%, 20%, ..., 100%
+    for p in range(0, 101, 10):
+        # Calcul du nombre exact de pixels à inverser selon la formule du sujet :
+        # n = arrondi(48 * p / 100)
+        n_flips = round(48 * p / 100)
+        
+        results[p] = {}
+
+        # Tester le modèle sur chaque chiffre (0 et 1)
+        for x, d in examples:
+            errors = 0  # Compteur de mauvaises prédictions pour ce chiffre et ce p
+            
+            # Générer et tester 50 copies distinctes
+            for _ in range(n_tests):
+                # a. Génération de la copie altérée
+                x_noisy = add_noise(x, n_flips, rng)
+                
+                # b. Évaluation SANS apprentissage (aucun appel à update)
+                pred = decision(x_noisy, w, b)
+                
+                # c. Comptage des erreurs de classification
+                if pred != d:
+                    errors += 1
+            
+            # Calcul du taux d'erreur (%) = 100 * mauvaises réponses / 50 essais
+            error_rate = (errors / n_tests) * 100.0
+            results[p][d] = error_rate
+
+    return results
+
+print("*** 1.4 - Test de robustesse au bruit ***")
+
+# Lancement de l'évaluation sur les poids issus de l'apprentissage (w_learned, b_learned)
+noise_results = test_robustness(examples, w_learned, b_learned)
+
+# Affichage clair du tableau sous forme textuelle (prêt à être exporté ou tracé)
+print(f"{'Bruit (%)':^10} | {'Erreur Chiffre 0 (%)':^20} | {'Erreur Chiffre 1 (%)':^20}")
+print("-" * 56)
+
+for p, res in noise_results.items():
+    print(f"{p:^10d} | {res[0]:^20.1f} | {res[1]:^20.1f}")
