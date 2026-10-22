@@ -1,0 +1,4 @@
+# MNIST raw data (downloaded by fetch_mnist.py, ~55 MB, not versioned)
+data/
+__pycache__/
+*.pyc
