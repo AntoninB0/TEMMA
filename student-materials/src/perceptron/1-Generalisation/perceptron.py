@@ -39,38 +39,22 @@ random.seed(SEED)
 w = [random.uniform(-0.1, 0.1) for _ in range(N)]
 b = BIAS
 
+#Q1.b
+def initialiser_poids(graine=SEED):
+    # Fixer la graine pour la reproductibilité
+    random.seed(graine)
+    # Générer 48 poids tirés uniformément dans [-0.1, 0.1]
+    w = [random.uniform(-0.1, 0.1) for i in range(N)]
+    return w
 
+def calculer_score(valeurs, poids, biais):
+    # On fait : a = Somme(valeurs * poids) + biais
+    a = biais
+    for j in range(N):
+        a += poids[j] * valeurs[j]    # Somme des produits w_j * x_j
+    return a
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+print("*** 1.b ***")
+poids = initialiser_poids()
+print("poids = ", poids)
+print("Calcul du score = ", calculer_score(x, poids, BIAS))
